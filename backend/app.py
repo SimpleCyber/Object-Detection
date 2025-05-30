@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from ultralytics import YOLO
+import torch
 import cv2
 import numpy as np
 from collections import Counter
@@ -8,8 +9,9 @@ import datetime
 app = Flask(__name__)
 
 # Load the YOLOv8 model once
-model = YOLO("yolov8n.pt")
-model_name = "yolov8n.pt"
+model_path = "yolov8n.pt"
+model = YOLO(model_path)
+model_name = model_path
 
 @app.route('/')
 def home():
@@ -39,34 +41,45 @@ def health():
 
 @app.route('/detect', methods=['POST'])
 def detect_objects():
-    if 'image' not in request.files:
-        return jsonify({"error": "No image uploaded. Use form-data key as 'image'."}), 400
+    try:
+        if 'image' not in request.files:
+            return jsonify({"error": "No image uploaded. Use form-data key as 'image'."}), 400
 
-    file = request.files['image']
-    image_bytes = file.read()
-    npimg = np.frombuffer(image_bytes, np.uint8)
-    image = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
+        file = request.files['image']
+        image_bytes = file.read()
+        npimg = np.frombuffer(image_bytes, np.uint8)
+        image = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
 
-    # Run detection
-    results = model(image)
-    detections = results[0].boxes
-    names = model.names
+        if image is None:
+            return jsonify({"error": "Could not decode image"}), 400
 
-    if detections is not None and len(detections) > 0:
-        class_ids = detections.cls.cpu().numpy().astype(int)
-        labels = [names[class_id] for class_id in class_ids]
-        counts = Counter(labels)
-        response = {
-            "detected_objects": dict(counts),
-            "total": sum(counts.values())
-        }
-    else:
-        response = {
-            "detected_objects": {},
-            "message": "No objects detected"
-        }
+        # Resize to reduce memory usage
+        image = cv2.resize(image, (640, 640))
 
-    return jsonify(response)
+        # Run detection
+        with torch.no_grad():
+            results = model.predict(image, stream=False)
+            detections = results[0].boxes
+            names = model.names
+
+            if detections is not None and len(detections) > 0:
+                class_ids = detections.cls.cpu().numpy().astype(int)
+                labels = [names[class_id] for class_id in class_ids]
+                counts = Counter(labels)
+                response = {
+                    "detected_objects": dict(counts),
+                    "total": sum(counts.values())
+                }
+            else:
+                response = {
+                    "detected_objects": {},
+                    "message": "No objects detected"
+                }
+
+        return jsonify(response)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False, host='0.0.0.0', port=5000)
