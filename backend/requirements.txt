@@ -1,0 +1,8 @@
+torch
+
+gunicorn
+flask
+flask-cors
+ultralytics
+opencv-python
+numpy
