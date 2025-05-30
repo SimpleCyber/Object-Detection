@@ -1,9 +1,8 @@
-flask
-flask-cors
-ultralytics
-numpy
 opencv-python-headless
 torch
+torchvision
+ultralytics
+flask
+flask-cors
+numpy
 gunicorn
-python-dotenv
-pillow
