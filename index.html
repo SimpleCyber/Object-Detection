@@ -70,7 +70,7 @@
             margin-bottom: 20px;
         }
 
-        #video, #canvas {
+        #video, #canvas, .captured-image {
             width: 100%;
             height: 100%;
             object-fit: cover;
@@ -82,6 +82,14 @@
             top: 0;
             left: 0;
             display: none;
+        }
+
+        .captured-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: none;
+            z-index: 5;
         }
 
         .camera-placeholder {
@@ -108,6 +116,7 @@
             gap: 15px;
             justify-content: center;
             margin-bottom: 20px;
+            flex-wrap: wrap;
         }
 
         .btn {
@@ -147,6 +156,17 @@
             transform: translateY(-2px);
         }
 
+        .btn-danger {
+            background: linear-gradient(45deg, #ef4444, #dc2626);
+            color: white;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6);
+        }
+
         .btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
@@ -173,6 +193,83 @@
         .switch-camera:hover {
             background: rgba(0, 0, 0, 0.7);
             transform: scale(1.1);
+        }
+
+        .history-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: slideUp 0.6s ease-out 0.3s both;
+        }
+
+        .history-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .history-header h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .history-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 12px;
+        }
+
+        .history-item {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .history-item:hover {
+            transform: scale(1.05);
+            border-color: #10b981;
+        }
+
+        .history-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .history-item .overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            color: white;
+            padding: 8px;
+            font-size: 0.8rem;
+            text-align: center;
+        }
+
+        .no-history {
+            text-align: center;
+            padding: 40px 20px;
+            opacity: 0.7;
+        }
+
+        .no-history svg {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
         }
 
         .results-container {
@@ -297,6 +394,19 @@
             color: #fca5a5;
         }
 
+        .debug-info {
+            display: none;
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 15px;
+            color: #93c5fd;
+            font-size: 0.9rem;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+
         @keyframes slideDown {
             from {
                 opacity: 0;
@@ -340,10 +450,15 @@
 
             .btn {
                 width: 100%;
+                min-width: auto;
             }
 
             .camera-view {
                 height: 250px;
+            }
+
+            .history-grid {
+                grid-template-columns: repeat(4, 1fr);
             }
         }
     </style>
@@ -368,6 +483,7 @@
                 </div>
                 <video id="video" autoplay playsinline style="display: none;"></video>
                 <canvas id="canvas"></canvas>
+                <img id="capturedImage" class="captured-image" alt="Captured photo">
                 <button class="switch-camera" id="switchCamera" style="display: none;">
                     <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M20 4h-3.17L15 2H9L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.65 0-3 1.35-3 3s1.35 3 3 3 3-1.35 3-3-1.35-3-3-3z"/>
@@ -388,6 +504,35 @@
                     </svg>
                     Capture & Detect
                 </button>
+                <button class="btn btn-danger" id="newPhotoBtn" style="display: none;">
+                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
+                    </svg>
+                    New Photo
+                </button>
+            </div>
+        </div>
+
+        <div class="history-section" id="historySection">
+            <div class="history-header">
+                <h2>
+                    <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
+                    </svg>
+                    Photo History
+                </h2>
+                <button class="btn btn-secondary" id="clearHistory" style="display: none; min-width: auto; padding: 8px 16px;">
+                    Clear All
+                </button>
+            </div>
+            
+            <div class="history-grid" id="historyGrid">
+                <div class="no-history">
+                    <svg fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M9 11H7v6h2v-6zm4 0h-2v6h2v-6zm4 0h-2v6h2v-6zm2-7h-3l-1-1H9L8 4H5v2h14V3z"/>
+                    </svg>
+                    <p>No photos captured yet</p>
+                </div>
             </div>
         </div>
 
@@ -422,6 +567,7 @@
             </div>
 
             <div class="error-message" id="errorMessage"></div>
+            <div class="debug-info" id="debugInfo"></div>
         </div>
     </div>
 
@@ -429,22 +575,33 @@
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
+        const capturedImage = document.getElementById('capturedImage');
         const startCameraBtn = document.getElementById('startCamera');
         const captureBtn = document.getElementById('captureBtn');
+        const newPhotoBtn = document.getElementById('newPhotoBtn');
         const switchCameraBtn = document.getElementById('switchCamera');
+        const clearHistoryBtn = document.getElementById('clearHistory');
         const placeholder = document.getElementById('placeholder');
         const loading = document.getElementById('loading');
         const resultsContent = document.getElementById('resultsContent');
         const noResults = document.getElementById('noResults');
         const errorMessage = document.getElementById('errorMessage');
+        const debugInfo = document.getElementById('debugInfo');
         const totalCount = document.getElementById('totalCount');
         const objectsGrid = document.getElementById('objectsGrid');
+        const historyGrid = document.getElementById('historyGrid');
 
         let stream = null;
-        let currentFacingMode = 'environment'; // Start with back camera
-        const API_URL = 'https://object-detection-lpgq.onrender.com/detect';
+        let currentFacingMode = 'environment';
+        let photoHistory = [];
+        let currentCapturedBlob = null;
 
-        // Start camera
+        const API_URL = ' http://localhost:5000/detect';
+
+        // Load history on page load
+        loadPhotoHistory();
+
+        // Event listeners
         startCameraBtn.addEventListener('click', async () => {
             try {
                 await startCamera();
@@ -453,21 +610,25 @@
             }
         });
 
-        // Capture and detect
         captureBtn.addEventListener('click', async () => {
-            capturePhoto();
-            await detectObjects();
+            await captureAndDetect();
         });
 
-        // Switch camera
+        newPhotoBtn.addEventListener('click', () => {
+            startNewPhoto();
+        });
+
         switchCameraBtn.addEventListener('click', async () => {
             currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
             await startCamera();
         });
 
+        clearHistoryBtn.addEventListener('click', () => {
+            clearPhotoHistory();
+        });
+
         async function startCamera() {
             try {
-                // Stop existing stream
                 if (stream) {
                     stream.getTracks().forEach(track => track.stop());
                 }
@@ -484,14 +645,21 @@
                 video.srcObject = stream;
                 
                 video.style.display = 'block';
+                capturedImage.style.display = 'none';
                 placeholder.style.display = 'none';
                 switchCameraBtn.style.display = 'flex';
                 
-                startCameraBtn.textContent = '📷 Camera Active';
+                startCameraBtn.innerHTML = `
+                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M12 1L9 4H5C3.9 4 3 4.9 3 6v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-4l-3-3z"/>
+                    </svg>
+                    Camera Active
+                `;
                 startCameraBtn.disabled = true;
                 captureBtn.disabled = false;
+                newPhotoBtn.style.display = 'none';
                 
-                // Set canvas dimensions
                 video.addEventListener('loadedmetadata', () => {
                     canvas.width = video.videoWidth;
                     canvas.height = video.videoHeight;
@@ -499,59 +667,284 @@
 
             } catch (error) {
                 console.error('Error accessing camera:', error);
-                showError('Camera access denied or not available.');
+                showError(`Camera access error: ${error.message}`);
+                showDebug(`Camera error details: ${JSON.stringify({
+                    name: error.name,
+                    message: error.message,
+                    constraints: constraints
+                }, null, 2)}`);
             }
         }
 
-        function capturePhoto() {
+        async function captureAndDetect() {
             if (!stream) return;
 
-            // Draw video frame to canvas
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            ctx.drawImage(video, 0, 0);
-            
-            // Show canvas, hide video temporarily for effect
-            canvas.style.display = 'block';
-            setTimeout(() => {
-                canvas.style.display = 'none';
-            }, 200);
-        }
-
-        async function detectObjects() {
             showLoading(true);
             hideResults();
 
             try {
-                // Convert canvas to blob
-                const blob = await new Promise(resolve => {
-                    canvas.toBlob(resolve, 'image/jpeg', 0.8);
+                // Capture photo
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                ctx.drawImage(video, 0, 0);
+                
+                // Convert to blob with higher quality
+                currentCapturedBlob = await new Promise(resolve => {
+                    canvas.toBlob(resolve, 'image/jpeg', 0.9);
                 });
 
-                // Create form data
-                const formData = new FormData();
-                formData.append('image', blob, 'capture.jpg');
+                // Show captured image
+                const imageUrl = URL.createObjectURL(currentCapturedBlob);
+                capturedImage.src = imageUrl;
+                capturedImage.style.display = 'block';
+                video.style.display = 'none';
+
+                // Update UI
+                captureBtn.disabled = true;
+                newPhotoBtn.style.display = 'flex';
+
+                // Debug info
+                showDebug(`Image captured: ${(currentCapturedBlob.size / 1024).toFixed(2)}KB, Type: ${currentCapturedBlob.type}`);
 
                 // Send to API
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const data = await response.json();
-                displayResults(data);
+                await detectObjects();
 
             } catch (error) {
-                console.error('Detection error:', error);
-                showError('Failed to analyze image. Please check your connection and try again.');
-            } finally {
+                console.error('Capture error:', error);
+                showError(`Failed to capture photo: ${error.message}`);
                 showLoading(false);
             }
         }
+
+        
+
+        async function detectObjects() {
+    if (!canvas) {
+        showError('Canvas not initialized.');
+        return;
+    }
+
+    showLoading(true);
+    hideResults();
+
+    try {
+        // Convert canvas to blob (JPEG format)
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8));
+
+        if (!blob) {
+            throw new Error('Failed to create image blob.');
+        }
+
+        // Create FormData and append image blob
+        const formData = new FormData();
+        formData.append('image', blob, 'capture.jpg');
+
+        showDebug(`Sending request to: ${API_URL}`);
+
+        // Send POST request to your Flask /detect API endpoint
+        const response = await fetch(`${API_URL}/detect`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'Accept': 'application/json',
+            }
+        });
+
+        showDebug(`Response status: ${response.status} ${response.statusText}`);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            showDebug(`Error response body: ${errorText}`);
+            throw new Error(`HTTP ${response.status}: ${response.statusText}\n${errorText}`);
+        }
+
+        // Parse JSON response from server
+        const data = await response.json();
+        displayResults(data);
+
+    } catch (error) {
+        console.error('Detection error:', error);
+        showError('Failed to analyze image. Please check your connection and try again.');
+    } finally {
+        showLoading(false);
+    }
+}
+
+async function detectObjects() {
+    if (!canvas) {
+        showError('Canvas not initialized.');
+        return;
+    }
+
+    showLoading(true);
+    hideResults();
+
+    try {
+        // Convert canvas to blob (JPEG format)
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8));
+
+        if (!blob) {
+            throw new Error('Failed to create image blob.');
+        }
+
+        // Create FormData and append image blob
+        const formData = new FormData();
+        formData.append('image', blob, 'capture.jpg');
+
+        showDebug(`Sending request to: ${API_URL}`);
+
+        // Send POST request to your Flask API endpoint
+        const response = await fetch(API_URL, {  // Remove the extra '/detect' here
+            method: 'POST',
+            body: formData,
+            headers: {
+                'Accept': 'application/json',
+            }
+        });
+
+        showDebug(`Response status: ${response.status} ${response.statusText}`);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            showDebug(`Error response body: ${errorText}`);
+            throw new Error(`HTTP ${response.status}: ${response.statusText}\n${errorText}`);
+        }
+
+        // Parse JSON response from server
+        const data = await response.json();
+        showDebug(`API Response: ${JSON.stringify(data, null, 2)}`);
+        
+        // Add to history before displaying results
+        if (currentCapturedBlob) {
+            addToHistory(currentCapturedBlob, data);
+        }
+        
+        displayResults(data);
+
+    } catch (error) {
+        console.error('Detection error:', error);
+        showError(`Failed to analyze image: ${error.message.split('\n')[0]}`);
+        showDebug(`Full error: ${error.message}`);
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Add these missing functions that were referenced in the HTML
+function addToHistory(imageBlob, detectionResults) {
+    const historyItem = {
+        id: Date.now(),
+        image: URL.createObjectURL(imageBlob),
+        results: detectionResults,
+        timestamp: new Date().toISOString()
+    };
+    
+    photoHistory.unshift(historyItem); // Add to beginning
+    
+    // Keep only last 20 items
+    if (photoHistory.length > 20) {
+        photoHistory = photoHistory.slice(0, 20);
+    }
+    
+    savePhotoHistory();
+    updateHistoryDisplay();
+}
+
+function loadPhotoHistory() {
+    try {
+        // Note: localStorage is not available in Claude artifacts
+        // This would work in a real browser environment
+        const saved = localStorage.getItem('photoHistory');
+        if (saved) {
+            photoHistory = JSON.parse(saved);
+            updateHistoryDisplay();
+        }
+    } catch (error) {
+        console.log('Could not load photo history:', error);
+        photoHistory = [];
+    }
+}
+
+function savePhotoHistory() {
+    try {
+        // Note: localStorage is not available in Claude artifacts
+        localStorage.setItem('photoHistory', JSON.stringify(photoHistory));
+    } catch (error) {
+        console.log('Could not save photo history:', error);
+    }
+}
+
+function updateHistoryDisplay() {
+    const historyGrid = document.getElementById('historyGrid');
+    const clearBtn = document.getElementById('clearHistory');
+    
+    if (photoHistory.length === 0) {
+        historyGrid.innerHTML = `
+            <div class="no-history">
+                <svg fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M9 11H7v6h2v-6zm4 0h-2v6h2v-6zm4 0h-2v6h2v-6zm2-7h-3l-1-1H9L8 4H5v2h14V3z"/>
+                </svg>
+                <p>No photos captured yet</p>
+            </div>
+        `;
+        clearBtn.style.display = 'none';
+    } else {
+        historyGrid.innerHTML = '';
+        clearBtn.style.display = 'flex';
+        
+        photoHistory.forEach((item, index) => {
+            const historyItem = document.createElement('div');
+            historyItem.className = 'history-item';
+            historyItem.innerHTML = `
+                <img src="${item.image}" alt="Captured photo">
+                <div class="overlay">
+                    ${item.results.total || 0} objects
+                </div>
+            `;
+            
+            historyItem.addEventListener('click', () => {
+                displayResults(item.results);
+                // Scroll to results
+                document.querySelector('.results-container').scrollIntoView({ 
+                    behavior: 'smooth' 
+                });
+            });
+            
+            historyGrid.appendChild(historyItem);
+        });
+    }
+}
+
+function clearPhotoHistory() {
+    if (confirm('Are you sure you want to clear all photo history?')) {
+        photoHistory = [];
+        savePhotoHistory();
+        updateHistoryDisplay();
+    }
+}
+
+function startNewPhoto() {
+    // Reset UI
+    capturedImage.style.display = 'none';
+    video.style.display = 'block';
+    
+    newPhotoBtn.style.display = 'none';
+    captureBtn.disabled = false;
+    
+    hideResults();
+    currentCapturedBlob = null;
+}
+
+function showDebug(message) {
+    const debugElement = document.getElementById('debugInfo');
+    if (debugElement) {
+        debugElement.textContent = message;
+        debugElement.style.display = 'block';
+        console.log('Debug:', message);
+    }
+}
+
+
 
         function displayResults(data) {
             hideResults();
