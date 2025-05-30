@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Camera - Object Detection</title>
+    <title>🤖 Smart Object Detection</title>
     <style>
         * {
             margin: 0;
@@ -12,421 +12,131 @@
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            color: #fff;
-            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+            padding: 20px;
         }
 
         .container {
-            max-width: 500px;
-            margin: 0 auto;
-            padding: 20px;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .header {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 700px;
+            width: 100%;
             text-align: center;
-            margin-bottom: 30px;
-            animation: slideDown 0.6s ease-out;
         }
 
-        .header h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
+        h1 {
+            color: #333;
             margin-bottom: 10px;
-            background: linear-gradient(45deg, #fff, #e0e7ff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            font-size: 2.5rem;
         }
 
-        .header p {
-            opacity: 0.9;
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
             font-size: 1.1rem;
         }
 
-        .camera-container {
-            position: relative;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
-            border-radius: 24px;
-            padding: 20px;
+        .status-indicator {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
             margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            animation: slideUp 0.6s ease-out 0.2s both;
+            font-weight: bold;
         }
 
-        .camera-view {
-            position: relative;
-            width: 100%;
-            height: 300px;
-            background: #000;
-            border-radius: 16px;
-            overflow: hidden;
-            margin-bottom: 20px;
+        .status-online {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
         }
 
-        #video, #canvas, .captured-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 16px;
+        .status-offline {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
         }
 
-        #canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            display: none;
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            margin: 20px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9ff;
         }
 
-        .captured-image {
-            position: absolute;
-            top: 0;
-            left: 0;
-            display: none;
-            z-index: 5;
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
         }
 
-        .camera-placeholder {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            background: linear-gradient(135deg, #1f2937, #374151);
-            color: #9ca3af;
-            font-size: 1.2rem;
-            text-align: center;
-            flex-direction: column;
+        .upload-area.dragover {
+            border-color: #764ba2;
+            background: #e8ebff;
+            transform: scale(1.02);
         }
 
-        .camera-placeholder svg {
-            width: 64px;
-            height: 64px;
-            margin-bottom: 15px;
-            opacity: 0.7;
-        }
-
-        .controls {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            padding: 12px 24px;
+        #upload-button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
             border: none;
+            padding: 15px 30px;
             border-radius: 50px;
-            font-size: 1rem;
-            font-weight: 600;
+            font-size: 1.1rem;
             cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            min-width: 120px;
-            justify-content: center;
+            transition: transform 0.3s ease;
+            margin: 20px 0;
         }
 
-        .btn-primary {
-            background: linear-gradient(45deg, #10b981, #059669);
-            color: white;
-            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
-        }
-
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.3);
+        #upload-button:hover {
             transform: translateY(-2px);
         }
 
-        .btn-danger {
-            background: linear-gradient(45deg, #ef4444, #dc2626);
-            color: white;
-            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
-        }
-
-        .btn-danger:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6);
-        }
-
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none !important;
-        }
-
-        .switch-camera {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: rgba(0, 0, 0, 0.5);
-            border: none;
-            color: white;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-        }
-
-        .switch-camera:hover {
-            background: rgba(0, 0, 0, 0.7);
-            transform: scale(1.1);
-        }
-
-        .history-section {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
-            border-radius: 24px;
-            padding: 25px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            animation: slideUp 0.6s ease-out 0.3s both;
-        }
-
-        .history-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-
-        .history-header h2 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .history-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-            gap: 12px;
-        }
-
-        .history-item {
-            position: relative;
-            aspect-ratio: 1;
-            border-radius: 12px;
+        #image-container {
+            margin: 20px 0;
+            border-radius: 15px;
             overflow: hidden;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
         }
 
-        .history-item:hover {
-            transform: scale(1.05);
-            border-color: #10b981;
+        #uploaded-image {
+            max-width: 100%;
+            max-height: 400px;
+            display: none;
         }
 
-        .history-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .history-item .overlay {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(transparent, rgba(0,0,0,0.8));
-            color: white;
-            padding: 8px;
-            font-size: 0.8rem;
-            text-align: center;
-        }
-
-        .no-history {
-            text-align: center;
-            padding: 40px 20px;
-            opacity: 0.7;
-        }
-
-        .no-history svg {
-            width: 48px;
-            height: 48px;
-            margin-bottom: 15px;
-            opacity: 0.5;
-        }
-
-        .results-container {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
-            border-radius: 24px;
-            padding: 25px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            animation: slideUp 0.6s ease-out 0.4s both;
-            flex-grow: 1;
-        }
-
-        .results-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .results-header h2 {
-            font-size: 1.5rem;
-            font-weight: 700;
+        #detection-results {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9ff;
+            border-radius: 15px;
+            text-align: left;
         }
 
         .loading {
             display: none;
-            text-align: center;
-            padding: 40px 20px;
+            margin: 20px 0;
         }
 
         .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
             width: 40px;
             height: 40px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-top: 3px solid #fff;
-            border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
-        }
-
-        .results-content {
-            display: none;
-        }
-
-        .summary {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .total-count {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: #10b981;
-            margin-bottom: 5px;
-        }
-
-        .total-label {
-            font-size: 1.1rem;
-            opacity: 0.9;
-        }
-
-        .objects-grid {
-            display: grid;
-            gap: 12px;
-        }
-
-        .object-item {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .object-item:hover {
-            background: rgba(255, 255, 255, 0.15);
-            transform: translateX(5px);
-        }
-
-        .object-name {
-            font-weight: 600;
-            font-size: 1.1rem;
-            text-transform: capitalize;
-        }
-
-        .object-count {
-            background: linear-gradient(45deg, #10b981, #059669);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-weight: 700;
-            font-size: 0.9rem;
-        }
-
-        .no-results {
-            display: none;
-            text-align: center;
-            padding: 40px 20px;
-            opacity: 0.8;
-        }
-
-        .no-results svg {
-            width: 64px;
-            height: 64px;
-            margin-bottom: 15px;
-            opacity: 0.5;
-        }
-
-        .error-message {
-            display: none;
-            background: rgba(239, 68, 68, 0.2);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            border-radius: 12px;
-            padding: 15px;
-            margin-top: 15px;
-            color: #fca5a5;
-        }
-
-        .debug-info {
-            display: none;
-            background: rgba(59, 130, 246, 0.2);
-            border: 1px solid rgba(59, 130, 246, 0.3);
-            border-radius: 12px;
-            padding: 15px;
-            margin-top: 15px;
-            color: #93c5fd;
-            font-size: 0.9rem;
-            font-family: monospace;
-            white-space: pre-wrap;
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            margin: 0 auto;
         }
 
         @keyframes spin {
@@ -434,605 +144,349 @@
             100% { transform: rotate(360deg); }
         }
 
-        @media (max-width: 480px) {
-            .container {
-                padding: 15px;
-            }
+        .object-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            margin: 8px 0;
+            background: white;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
 
-            .header h1 {
+        .object-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .object-name {
+            font-weight: bold;
+            text-transform: capitalize;
+            font-size: 1.1rem;
+        }
+
+        .object-confidence {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .object-count {
+            background: #667eea;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .error {
+            color: #e74c3c;
+            background: #ffeaea;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #e74c3c;
+        }
+
+        .success {
+            color: #27ae60;
+            background: #eafaf1;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #27ae60;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            h1 {
                 font-size: 2rem;
             }
-
-            .controls {
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            .btn {
-                width: 100%;
-                min-width: auto;
-            }
-
-            .camera-view {
-                height: 250px;
-            }
-
-            .history-grid {
-                grid-template-columns: repeat(4, 1fr);
+            
+            .stats {
+                grid-template-columns: 1fr 1fr;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>🤖 Smart Camera</h1>
-            <p>Capture photos and detect objects with AI</p>
+        <h1>🤖 Smart Object Detection</h1>
+        <p class="subtitle">Upload an image to detect objects using YOLOv8 AI</p>
+        
+        <div id="status-indicator" class="status-indicator status-offline">
+            🔴 Checking connection...
+        </div>
+        
+        <div class="upload-area" id="upload-area">
+            <p>📁 Click here or drag and drop an image</p>
+            <p style="font-size: 0.9rem; color: #666; margin-top: 10px;">
+                Supported: JPEG, PNG, GIF, BMP, WebP (max 10MB)
+            </p>
+            <input type="file" id="image-upload" accept="image/*" style="display: none;">
+            <button id="upload-button">Choose Image</button>
         </div>
 
-        <div class="camera-container">
-            <div class="camera-view">
-                <div class="camera-placeholder" id="placeholder">
-                    <svg fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 15.5A3.5 3.5 0 0 1 8.5 12A3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97 0-.33-.03-.65-.07-.97l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.31-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.37-2.65A.506.506 0 0 0 14 2h-4c-.25 0-.46.18-.5.42l-.37 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.32-.07.65-.07.97 0 .33.03.65.07.97L2.46 14.6c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.31.61.22l2.49-1c.52.39 1.06.73 1.69.98l.37 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.37-2.65c.63-.25 1.17-.59 1.69-.98l2.49 1c.22.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.63Z"/>
-                    </svg>
-                    <div>
-                        <p>Click "Start Camera" to begin</p>
-                        <p style="font-size: 0.9rem; opacity: 0.7; margin-top: 5px;">Grant camera permission when prompted</p>
-                    </div>
-                </div>
-                <video id="video" autoplay playsinline style="display: none;"></video>
-                <canvas id="canvas"></canvas>
-                <img id="capturedImage" class="captured-image" alt="Captured photo">
-                <button class="switch-camera" id="switchCamera" style="display: none;">
-                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M20 4h-3.17L15 2H9L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.65 0-3 1.35-3 3s1.35 3 3 3 3-1.35 3-3-1.35-3-3-3z"/>
-                    </svg>
-                </button>
-            </div>
-
-            <div class="controls">
-                <button class="btn btn-secondary" id="startCamera">
-                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
-                    </svg>
-                    Start Camera
-                </button>
-                <button class="btn btn-primary" id="captureBtn" disabled>
-                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 15.5A3.5 3.5 0 0 1 8.5 12A3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97 0-.33-.03-.65-.07-.97l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.31-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.37-2.65A.506.506 0 0 0 14 2h-4c-.25 0-.46.18-.5.42l-.37 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.32-.07.65-.07.97 0 .33.03.65.07.97L2.46 14.6c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.31.61.22l2.49-1c.52.39 1.06.73 1.69.98l.37 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.37-2.65c.63-.25 1.17-.59 1.69-.98l2.49 1c.22.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.63Z"/>
-                    </svg>
-                    Capture & Detect
-                </button>
-                <button class="btn btn-danger" id="newPhotoBtn" style="display: none;">
-                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
-                    </svg>
-                    New Photo
-                </button>
-            </div>
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>🔍 Analyzing image with AI...</p>
+            <p style="font-size: 0.9rem; color: #666;">This may take a few seconds</p>
         </div>
 
-        <div class="history-section" id="historySection">
-            <div class="history-header">
-                <h2>
-                    <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
-                    </svg>
-                    Photo History
-                </h2>
-                <button class="btn btn-secondary" id="clearHistory" style="display: none; min-width: auto; padding: 8px 16px;">
-                    Clear All
-                </button>
-            </div>
-            
-            <div class="history-grid" id="historyGrid">
-                <div class="no-history">
-                    <svg fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M9 11H7v6h2v-6zm4 0h-2v6h2v-6zm4 0h-2v6h2v-6zm2-7h-3l-1-1H9L8 4H5v2h14V3z"/>
-                    </svg>
-                    <p>No photos captured yet</p>
-                </div>
-            </div>
+        <div id="image-container">
+            <img id="uploaded-image" alt="Uploaded Image">
         </div>
 
-        <div class="results-container">
-            <div class="results-header">
-                <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                </svg>
-                <h2>Detection Results</h2>
-            </div>
-
-            <div class="loading" id="loading">
-                <div class="spinner"></div>
-                <p>Analyzing image with AI...</p>
-                <p style="font-size: 0.9rem; opacity: 0.7; margin-top: 10px;">This may take a few seconds</p>
-            </div>
-
-            <div class="results-content" id="resultsContent">
-                <div class="summary">
-                    <div class="total-count" id="totalCount">0</div>
-                    <div class="total-label">Objects Detected</div>
-                </div>
-                <div class="objects-grid" id="objectsGrid"></div>
-            </div>
-
-            <div class="no-results" id="noResults">
-                <svg fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                </svg>
-                <h3>No Objects Detected</h3>
-                <p>Try capturing a different image with more visible objects</p>
-            </div>
-
-            <div class="error-message" id="errorMessage"></div>
-            <div class="debug-info" id="debugInfo"></div>
-        </div>
+        <div id="detection-results"></div>
     </div>
 
     <script>
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        const capturedImage = document.getElementById('capturedImage');
-        const startCameraBtn = document.getElementById('startCamera');
-        const captureBtn = document.getElementById('captureBtn');
-        const newPhotoBtn = document.getElementById('newPhotoBtn');
-        const switchCameraBtn = document.getElementById('switchCamera');
-        const clearHistoryBtn = document.getElementById('clearHistory');
-        const placeholder = document.getElementById('placeholder');
+        const API_URL = 'http://localhost:5000';
+        const uploadArea = document.getElementById('upload-area');
+        const uploadButton = document.getElementById('upload-button');
+        const imageUpload = document.getElementById('image-upload');
+        const uploadedImage = document.getElementById('uploaded-image');
+        const detectionResults = document.getElementById('detection-results');
         const loading = document.getElementById('loading');
-        const resultsContent = document.getElementById('resultsContent');
-        const noResults = document.getElementById('noResults');
-        const errorMessage = document.getElementById('errorMessage');
-        const debugInfo = document.getElementById('debugInfo');
-        const totalCount = document.getElementById('totalCount');
-        const objectsGrid = document.getElementById('objectsGrid');
-        const historyGrid = document.getElementById('historyGrid');
+        const statusIndicator = document.getElementById('status-indicator');
 
-        let stream = null;
-        let currentFacingMode = 'environment';
-        let photoHistory = [];
-        let currentCapturedBlob = null;
+        // Check API status on page load
+        checkAPIStatus();
 
-        const API_URL = 'https://object-detection-lpgq.onrender.com/detect';
+        // Click to upload
+        uploadButton.addEventListener('click', () => {
+            imageUpload.click();
+        });
 
-        // Load history on page load
-        loadPhotoHistory();
+        uploadArea.addEventListener('click', () => {
+            imageUpload.click();
+        });
 
-        // Event listeners
-        startCameraBtn.addEventListener('click', async () => {
-            try {
-                await startCamera();
-            } catch (error) {
-                showError('Unable to access camera. Please check permissions.');
+        // Drag and drop functionality
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
             }
         });
 
-        captureBtn.addEventListener('click', async () => {
-            await captureAndDetect();
+        imageUpload.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
         });
 
-        newPhotoBtn.addEventListener('click', () => {
-            startNewPhoto();
-        });
-
-        switchCameraBtn.addEventListener('click', async () => {
-            currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
-            await startCamera();
-        });
-
-        clearHistoryBtn.addEventListener('click', () => {
-            clearPhotoHistory();
-        });
-
-        async function startCamera() {
-            try {
-                if (stream) {
-                    stream.getTracks().forEach(track => track.stop());
-                }
-
-                const constraints = {
-                    video: {
-                        facingMode: currentFacingMode,
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
-                    }
-                };
-
-                stream = await navigator.mediaDevices.getUserMedia(constraints);
-                video.srcObject = stream;
-                
-                video.style.display = 'block';
-                capturedImage.style.display = 'none';
-                placeholder.style.display = 'none';
-                switchCameraBtn.style.display = 'flex';
-                
-                startCameraBtn.innerHTML = `
-                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="3"/>
-                        <path d="M12 1L9 4H5C3.9 4 3 4.9 3 6v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-4l-3-3z"/>
-                    </svg>
-                    Camera Active
-                `;
-                startCameraBtn.disabled = true;
-                captureBtn.disabled = false;
-                newPhotoBtn.style.display = 'none';
-                
-                video.addEventListener('loadedmetadata', () => {
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
+        function checkAPIStatus() {
+            fetch(`${API_URL}/health`)
+                .then(response => response.json())
+                .then(data => {
+                    statusIndicator.textContent = `🟢 ${data.model_status === 'loaded' ? 'Ready' : 'Model Error'}`;
+                    statusIndicator.className = `status-indicator ${data.model_status === 'loaded' ? 'status-online' : 'status-offline'}`;
+                    console.log('API Status:', data);
+                })
+                .catch(error => {
+                    statusIndicator.textContent = '🔴 Server Offline';
+                    statusIndicator.className = 'status-indicator status-offline';
+                    console.warn('API connection failed:', error);
                 });
-
-            } catch (error) {
-                console.error('Error accessing camera:', error);
-                showError(`Camera access error: ${error.message}`);
-                showDebug(`Camera error details: ${JSON.stringify({
-                    name: error.name,
-                    message: error.message,
-                    constraints: constraints
-                }, null, 2)}`);
-            }
         }
 
-        async function captureAndDetect() {
-            if (!stream) return;
+        function handleFile(file) {
+            // Validate file type
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/bmp', 'image/webp'];
+            if (!allowedTypes.includes(file.type)) {
+                showError('Please select a valid image file (JPEG, PNG, GIF, BMP, WebP)');
+                return;
+            }
 
+            // Validate file size (10MB limit)
+            if (file.size > 10 * 1024 * 1024) {
+                showError('File size must be less than 10MB');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                uploadedImage.src = e.target.result;
+                uploadedImage.style.display = 'block';
+                detectObjects(file);
+            }
+            reader.readAsDataURL(file);
+        }
+
+        function detectObjects(imageFile) {
             showLoading(true);
-            hideResults();
+            clearResults();
 
-            try {
-                // Capture photo
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                ctx.drawImage(video, 0, 0);
-                
-                // Convert to blob with higher quality
-                currentCapturedBlob = await new Promise(resolve => {
-                    canvas.toBlob(resolve, 'image/jpeg', 0.9);
-                });
+            const formData = new FormData();
+            formData.append('image', imageFile);
 
-                // Show captured image
-                const imageUrl = URL.createObjectURL(currentCapturedBlob);
-                capturedImage.src = imageUrl;
-                capturedImage.style.display = 'block';
-                video.style.display = 'none';
+            const startTime = Date.now();
 
-                // Update UI
-                captureBtn.disabled = true;
-                newPhotoBtn.style.display = 'flex';
-
-                // Debug info
-                showDebug(`Image captured: ${(currentCapturedBlob.size / 1024).toFixed(2)}KB, Type: ${currentCapturedBlob.type}`);
-
-                // Send to API
-                await detectObjects();
-
-            } catch (error) {
-                console.error('Capture error:', error);
-                showError(`Failed to capture photo: ${error.message}`);
+            fetch(`${API_URL}/detect`, {
+                method: 'POST',
+                body: formData,
+                mode: 'cors'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
                 showLoading(false);
-            }
-        }
-
-        
-
-        async function detectObjects() {
-    if (!canvas) {
-        showError('Canvas not initialized.');
-        return;
-    }
-
-    showLoading(true);
-    hideResults();
-
-    try {
-        // Convert canvas to blob (JPEG format)
-        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8));
-
-        if (!blob) {
-            throw new Error('Failed to create image blob.');
-        }
-
-        // Create FormData and append image blob
-        const formData = new FormData();
-        formData.append('image', blob, 'capture.jpg');
-
-        showDebug(`Sending request to: ${API_URL}`);
-
-        // Send POST request to your Flask /detect API endpoint
-        const response = await fetch(`${API_URL}/detect`, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'Accept': 'application/json',
-            }
-        });
-
-        showDebug(`Response status: ${response.status} ${response.statusText}`);
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            showDebug(`Error response body: ${errorText}`);
-            throw new Error(`HTTP ${response.status}: ${response.statusText}\n${errorText}`);
-        }
-
-        // Parse JSON response from server
-        const data = await response.json();
-        displayResults(data);
-
-    } catch (error) {
-        console.error('Detection error:', error);
-        showError('Failed to analyze image. Please check your connection and try again.');
-    } finally {
-        showLoading(false);
-    }
-}
-
-async function detectObjects() {
-    if (!canvas) {
-        showError('Canvas not initialized.');
-        return;
-    }
-
-    showLoading(true);
-    hideResults();
-
-    try {
-        // Convert canvas to blob (JPEG format)
-        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8));
-
-        if (!blob) {
-            throw new Error('Failed to create image blob.');
-        }
-
-        // Create FormData and append image blob
-        const formData = new FormData();
-        formData.append('image', blob, 'capture.jpg');
-
-        showDebug(`Sending request to: ${API_URL}`);
-
-        // Send POST request to your Flask API endpoint
-        const response = await fetch(API_URL, {  // Remove the extra '/detect' here
-            method: 'POST',
-            body: formData,
-            headers: {
-                'Accept': 'application/json',
-            }
-        });
-
-        showDebug(`Response status: ${response.status} ${response.statusText}`);
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            showDebug(`Error response body: ${errorText}`);
-            throw new Error(`HTTP ${response.status}: ${response.statusText}\n${errorText}`);
-        }
-
-        // Parse JSON response from server
-        const data = await response.json();
-        showDebug(`API Response: ${JSON.stringify(data, null, 2)}`);
-        
-        // Add to history before displaying results
-        if (currentCapturedBlob) {
-            addToHistory(currentCapturedBlob, data);
-        }
-        
-        displayResults(data);
-
-    } catch (error) {
-        console.error('Detection error:', error);
-        showError(`Failed to analyze image: ${error.message.split('\n')[0]}`);
-        showDebug(`Full error: ${error.message}`);
-    } finally {
-        showLoading(false);
-    }
-}
-
-// Add these missing functions that were referenced in the HTML
-function addToHistory(imageBlob, detectionResults) {
-    const historyItem = {
-        id: Date.now(),
-        image: URL.createObjectURL(imageBlob),
-        results: detectionResults,
-        timestamp: new Date().toISOString()
-    };
-    
-    photoHistory.unshift(historyItem); // Add to beginning
-    
-    // Keep only last 20 items
-    if (photoHistory.length > 20) {
-        photoHistory = photoHistory.slice(0, 20);
-    }
-    
-    savePhotoHistory();
-    updateHistoryDisplay();
-}
-
-function loadPhotoHistory() {
-    try {
-        // Note: localStorage is not available in Claude artifacts
-        // This would work in a real browser environment
-        const saved = localStorage.getItem('photoHistory');
-        if (saved) {
-            photoHistory = JSON.parse(saved);
-            updateHistoryDisplay();
-        }
-    } catch (error) {
-        console.log('Could not load photo history:', error);
-        photoHistory = [];
-    }
-}
-
-function savePhotoHistory() {
-    try {
-        // Note: localStorage is not available in Claude artifacts
-        localStorage.setItem('photoHistory', JSON.stringify(photoHistory));
-    } catch (error) {
-        console.log('Could not save photo history:', error);
-    }
-}
-
-function updateHistoryDisplay() {
-    const historyGrid = document.getElementById('historyGrid');
-    const clearBtn = document.getElementById('clearHistory');
-    
-    if (photoHistory.length === 0) {
-        historyGrid.innerHTML = `
-            <div class="no-history">
-                <svg fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M9 11H7v6h2v-6zm4 0h-2v6h2v-6zm4 0h-2v6h2v-6zm2-7h-3l-1-1H9L8 4H5v2h14V3z"/>
-                </svg>
-                <p>No photos captured yet</p>
-            </div>
-        `;
-        clearBtn.style.display = 'none';
-    } else {
-        historyGrid.innerHTML = '';
-        clearBtn.style.display = 'flex';
-        
-        photoHistory.forEach((item, index) => {
-            const historyItem = document.createElement('div');
-            historyItem.className = 'history-item';
-            historyItem.innerHTML = `
-                <img src="${item.image}" alt="Captured photo">
-                <div class="overlay">
-                    ${item.results.total || 0} objects
-                </div>
-            `;
-            
-            historyItem.addEventListener('click', () => {
-                displayResults(item.results);
-                // Scroll to results
-                document.querySelector('.results-container').scrollIntoView({ 
-                    behavior: 'smooth' 
-                });
+                const clientTime = Date.now() - startTime;
+                displayResults(data, clientTime);
+            })
+            .catch(error => {
+                showLoading(false);
+                console.error('Error:', error);
+                showError(`Failed to detect objects: ${error.message}`);
             });
+        }
+
+        function displayResults(data, clientTime) {
+            if (data.error) {
+                showError(data.error);
+                return;
+            }
+
+            let resultsHTML = '<h3>🎯 Detection Results</h3>';
             
-            historyGrid.appendChild(historyItem);
-        });
-    }
-}
-
-function clearPhotoHistory() {
-    if (confirm('Are you sure you want to clear all photo history?')) {
-        photoHistory = [];
-        savePhotoHistory();
-        updateHistoryDisplay();
-    }
-}
-
-function startNewPhoto() {
-    // Reset UI
-    capturedImage.style.display = 'none';
-    video.style.display = 'block';
-    
-    newPhotoBtn.style.display = 'none';
-    captureBtn.disabled = false;
-    
-    hideResults();
-    currentCapturedBlob = null;
-}
-
-function showDebug(message) {
-    const debugElement = document.getElementById('debugInfo');
-    if (debugElement) {
-        debugElement.textContent = message;
-        debugElement.style.display = 'block';
-        console.log('Debug:', message);
-    }
-}
-
-
-
-        function displayResults(data) {
-            hideResults();
-
             if (data.detected_objects && Object.keys(data.detected_objects).length > 0) {
-                // Show results
-                resultsContent.style.display = 'block';
+                resultsHTML += `<div class="success">✅ Found ${data.total} objects!</div>`;
                 
-                // Update total count
-                totalCount.textContent = data.total || 0;
+                // Add performance stats
+                if (data.processing_time) {
+                    resultsHTML += `
+                        <div class="stats">
+                            <div class="stat-item">
+                                <div class="stat-value">${data.total}</div>
+                                <div class="stat-label">Objects Found</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">${data.processing_time.detection_ms}ms</div>
+                                <div class="stat-label">AI Processing</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">${clientTime}ms</div>
+                                <div class="stat-label">Total Time</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">${data.confidence_threshold}</div>
+                                <div class="stat-label">Min Confidence</div>
+                            </div>
+                        </div>
+                    `;
+                }
                 
-                // Clear and populate objects grid
-                objectsGrid.innerHTML = '';
-                
-                // Sort objects by count (descending)
+                // Sort objects by count
                 const sortedObjects = Object.entries(data.detected_objects)
                     .sort((a, b) => b[1] - a[1]);
 
-                sortedObjects.forEach(([objectName, count], index) => {
-                    const objectItem = document.createElement('div');
-                    objectItem.className = 'object-item';
-                    objectItem.style.animationDelay = `${index * 0.1}s`;
-                    objectItem.innerHTML = `
-                        <div class="object-name">${objectName}</div>
-                        <div class="object-count">${count}</div>
+                sortedObjects.forEach(([objectName, count]) => {
+                    const confidence = data.average_confidences && data.average_confidences[objectName] 
+                        ? `${(data.average_confidences[objectName] * 100).toFixed(1)}% confidence`
+                        : '';
+                    
+                    resultsHTML += `
+                        <div class="object-item">
+                            <div class="object-info">
+                                <div class="object-name">${objectName}</div>
+                                ${confidence ? `<div class="object-confidence">${confidence}</div>` : ''}
+                            </div>
+                            <div class="object-count">${count}</div>
+                        </div>
                     `;
-                    objectsGrid.appendChild(objectItem);
                 });
 
-                // Speak results
-                speakResults(data);
-
             } else {
-                // No objects detected
-                noResults.style.display = 'block';
-                speak("No objects were detected in the image.");
-            }
-        }
-
-        function speakResults(data) {
-            if ('speechSynthesis' in window) {
-                const objectCount = data.total || 0;
-                const objectTypes = Object.keys(data.detected_objects || {}).length;
-                
-                let message = `I detected ${objectCount} object${objectCount !== 1 ? 's' : ''} in total. `;
-                
-                if (objectTypes > 0) {
-                    const objects = Object.entries(data.detected_objects)
-                        .map(([name, count]) => `${count} ${name}${count !== 1 ? 's' : ''}`)
-                        .join(', ');
-                    message += `Including: ${objects}.`;
+                resultsHTML += '<div class="error">❌ No objects detected in the image.</div>';
+                if (data.message) {
+                    resultsHTML += `<p style="color: #666; margin-top: 10px;">${data.message}</p>`;
                 }
-
-                speak(message);
+                
+                if (data.processing_time) {
+                    resultsHTML += `
+                        <div class="stats">
+                            <div class="stat-item">
+                                <div class="stat-value">${data.processing_time.detection_ms}ms</div>
+                                <div class="stat-label">AI Processing</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">${clientTime}ms</div>
+                                <div class="stat-label">Total Time</div>
+                            </div>
+                        </div>
+                    `;
+                }
             }
-        }
 
-        function speak(text) {
-            if ('speechSynthesis' in window) {
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.rate = 0.9;
-                utterance.pitch = 1;
-                speechSynthesis.speak(utterance);
-            }
+            detectionResults.innerHTML = resultsHTML;
         }
 
         function showLoading(show) {
             loading.style.display = show ? 'block' : 'none';
         }
 
-        function hideResults() {
-            resultsContent.style.display = 'none';
-            noResults.style.display = 'none';
-            errorMessage.style.display = 'none';
-        }
-
         function showError(message) {
-            hideResults();
-            showLoading(false);
-            errorMessage.textContent = message;
-            errorMessage.style.display = 'block';
-            speak(message);
+            detectionResults.innerHTML = `<div class="error">❌ ${message}</div>`;
         }
 
-        // Check camera support
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            showError('Camera not supported in this browser.');
+        function clearResults() {
+            detectionResults.innerHTML = '';
         }
+
+        // Refresh API status every 30 seconds
+        setInterval(checkAPIStatus, 30000);
     </script>
 </body>
 </html>
