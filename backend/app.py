@@ -76,6 +76,10 @@ def detect_objects():
     start_time = datetime.datetime.now()
     
     try:
+        import psutil
+        if psutil.virtual_memory().percent > 90:
+            return jsonify({"error": "Server overloaded"}), 503
+        
         if not model_loaded or model is None:
             return jsonify({
                 "error": "Model not loaded",
@@ -188,4 +192,5 @@ def detect_objects():
         }), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
