@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Camera App</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <h1><i class="fas fa-camera"></i> Gemini Camera</h1>
+                <button class="settings-btn" onclick="openSettings()">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Camera Interface -->
+        <main class="camera-main">
+            <div class="camera-container">
+                <video id="cameraFeed" autoplay playsinline></video>
+                <canvas id="photoCanvas" style="display: none;"></canvas>
+                
+                <!-- Camera Overlay -->
+                <div class="camera-overlay">
+                    <div class="focus-indicator" id="focusIndicator"></div>
+                </div>
+
+                <!-- Analysis Results -->
+                <div class="analysis-panel" id="analysisPanel">
+                    <div class="analysis-header">
+                        <h3><i class="fas fa-brain"></i> AI Analysis</h3>
+                        <button class="close-analysis" onclick="closeAnalysis()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="analysis-content" id="analysisContent">
+                        <div class="loading" id="analysisLoading">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Analyzing image...</p>
+                        </div>
+                        <div class="analysis-results" id="analysisResults"></div>
+                    </div>
+                    <div class="analysis-actions">
+                        <button class="speak-btn" onclick="speakAnalysis()">
+                            <i class="fas fa-volume-up"></i> Listen
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Camera Controls -->
+            <div class="camera-controls">
+                <button class="control-btn gallery-btn" onclick="openGallery()">
+                    <i class="fas fa-images"></i>
+                </button>
+                
+                <button class="capture-btn" id="captureBtn" onclick="capturePhoto()">
+                    <div class="capture-inner"></div>
+                </button>
+                
+                <button class="control-btn flip-btn" onclick="flipCamera()">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+
+            <!-- Flash and Timer Controls -->
+            <div class="top-controls">
+                <button class="top-control-btn flash-btn" onclick="toggleFlash()">
+                    <i class="fas fa-bolt" id="flashIcon"></i>
+                </button>
+                <button class="top-control-btn timer-btn" onclick="toggleTimer()">
+                    <i class="fas fa-clock" id="timerIcon"></i>
+                </button>
+            </div>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-btn active" onclick="switchPage('camera')">
+                <i class="fas fa-camera"></i>
+                <span>Camera</span>
+            </button>
+            <button class="nav-btn" onclick="switchPage('gallery')">
+                <i class="fas fa-images"></i>
+                <span>Gallery</span>
+            </button>
+            <button class="nav-btn" onclick="switchPage('history')">
+                <i class="fas fa-history"></i>
+                <span>History</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Gallery Modal -->
+    <div class="modal" id="galleryModal">
+        <div class="modal-content gallery-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-images"></i> Gallery</h2>
+                <button class="close-modal" onclick="closeGallery()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="gallery-grid" id="galleryGrid">
+                <!-- Gallery items will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- History Modal -->
+    <div class="modal" id="historyModal">
+        <div class="modal-content history-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-history"></i> Analysis History</h2>
+                <button class="close-modal" onclick="closeHistory()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="history-list" id="historyList">
+                <!-- History items will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content settings-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-cog"></i> Settings</h2>
+                <button class="close-modal" onclick="closeSettings()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="settings-list">
+                <div class="setting-item">
+                    <label>
+                        <i class="fas fa-volume-up"></i>
+                        Voice Speed
+                    </label>
+                    <input type="range" id="voiceSpeed" min="0.5" max="2" step="0.1" value="1">
+                </div>
+                <div class="setting-item">
+                    <label>
+                        <i class="fas fa-language"></i>
+                        Voice Language
+                    </label>
+                    <select id="voiceLanguage">
+                        <option value="en-US">English (US)</option>
+                        <option value="en-GB">English (UK)</option>
+                        <option value="es-ES">Spanish</option>
+                        <option value="fr-FR">French</option>
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <button class="clear-data-btn" onclick="clearAllData()">
+                        <i class="fas fa-trash"></i>
+                        Clear All Data
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
